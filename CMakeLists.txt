@@ -40,6 +40,7 @@ target_sources(FinalJuceVSCodeApp PRIVATE
     Source/TrackListComponent.h
     Source/WaveformDisplay.cpp
     Source/WaveformDisplay.h
+    Source/MemoryAudioSource.h
 
 )
 
