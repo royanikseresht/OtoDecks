@@ -483,19 +483,23 @@ void TrackListComponent::shuffleList()
 
 void TrackListComponent::proceedEndOfTrack()
 {
-    // If repeat mode is not active, proceed to the next track
     if (!repeatButton.getToggleState())
     {
         changeToNextTrack();
     }
-    // If repeat mode is active, play the same song again
     else
     {
-        player->setPositionRelative(0.00);
-        player->start();
-
+        if (player->isReversed())
+        {
+            player->setPositionRelative(1.0); // reset position for reverse
+            player->startReverse();            // keep playing reverse
+        }
+        else
+        {
+            player->setPositionRelative(0.0);
+            player->startForward();            // start forward playback
+        }
     }
-
 }
 
 

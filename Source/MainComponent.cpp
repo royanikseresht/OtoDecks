@@ -6,6 +6,7 @@ MainComponent::MainComponent()
     // Make sure you set the size of the component after
     // you add any child components.
     setSize (1000, 800);
+    
 
     static ModernLookAndFeel modernLook;
     juce::LookAndFeel::setDefaultLookAndFeel(&modernLook);
@@ -30,10 +31,14 @@ MainComponent::MainComponent()
 
     formatManager.registerBasicFormats();
 
+    startTimer(30);
+
 }
 
 MainComponent::~MainComponent()
 {
+
+    stopTimer();
     // This shuts down the audio device and clears the audio source.
     shutdownAudio();
 
@@ -110,5 +115,46 @@ void DeckGUI::filesDropped(const juce::StringArray& files, int x, int y)
         trackListComponent.trackTitles.clear();
         trackListComponent.trackPaths.clear();
         
+    }
+}
+
+void MainComponent::timerCallback()
+{
+    // Update deck 1 waveform playhead position
+    if (player1.isPlaying())
+    {
+        double length1 = player1.getLengthInSeconds();
+        if (length1 > 0)
+        {
+            double currentPos1 = player1.getCurrentPosition();
+            double relativePos1 = 0.0;
+
+            if (player1.isReversed())
+                relativePos1 = 1.0 - (currentPos1 / length1);
+            else
+                relativePos1 = currentPos1 / length1;
+
+            relativePos1 = juce::jlimit(0.0, 1.0, relativePos1);
+            deckGUI1.waveformDisplay.setPositionRelative(relativePos1);
+        }
+    }
+
+    // Update deck 2 waveform playhead position
+    if (player2.isPlaying())
+    {
+        double length2 = player2.getLengthInSeconds();
+        if (length2 > 0)
+        {
+            double currentPos2 = player2.getCurrentPosition();
+            double relativePos2 = 0.0;
+
+            if (player2.isReversed())
+                relativePos2 = 1.0 - (currentPos2 / length2);
+            else
+                relativePos2 = currentPos2 / length2;
+
+            relativePos2 = juce::jlimit(0.0, 1.0, relativePos2);
+            deckGUI2.waveformDisplay.setPositionRelative(relativePos2);
+        }
     }
 }

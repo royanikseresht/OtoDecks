@@ -42,7 +42,7 @@ void WaveformDisplay::paint (juce::Graphics& g)
     {
         audioThumb.drawChannel(g, getLocalBounds(), 0, audioThumb.getTotalLength(), 0, 1.0f);
         g.setColour(juce::Colours::darkgrey);
-        g.drawRect(position * getWidth(), 0, getWidth() / 20, getHeight());
+        g.drawLine(position * getWidth(), 0, position * getWidth(), getHeight(), 2.0f);
     }
     else
     {

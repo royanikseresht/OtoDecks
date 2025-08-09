@@ -2,15 +2,13 @@
   ==============================================================================
 
     DJAudioPlayer.h
-    Created: 22 Jan 2022 11:02:25am
-    Author:  oktay
 
   ==============================================================================
 */
 
 #pragma once
 #include <JuceHeader.h>
-
+#include "MemoryAudioSource.h"
 
 class DJAudioPlayer : public juce::AudioSource {
     public:
@@ -31,6 +29,8 @@ class DJAudioPlayer : public juce::AudioSource {
         void setPositionRelative(double pos);
 
         void start();
+        void startForward();
+        void startReverse();
         void stop();
 
         // Get the relative position of the playhead
@@ -41,11 +41,36 @@ class DJAudioPlayer : public juce::AudioSource {
         // Sends if the track is finished or not
         bool isTrackFinished();
 
+        double getCurrentPosition() const;
+        double getLengthInSeconds() const;
+        bool isPlaying() const;
+
+        bool isReversed() const { return isReversedFlag; } 
+        double getSampleRate() const { return currentSampleRate; }
+
+
 
     private:
         juce::AudioFormatManager& formatManager;
-        std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
-        juce::AudioTransportSource transportSource;
-        juce::ResamplingAudioSource resampleSource{&transportSource, false, 2};
+
+        juce::AudioBuffer<float> audioBuffer;
+        juce::AudioBuffer<float> reversedBuffer;
+
+        std::unique_ptr<juce::AudioFormatReaderSource> forwardSource;
+        std::unique_ptr<OtoDecksAudio::MemoryAudioSource> reverseMemorySource;
+
+        juce::AudioTransportSource forwardTransport;
+        juce::AudioTransportSource reverseTransport;
+
+        // Add these resamplers for speed control
+        juce::ResamplingAudioSource forwardResampler { &forwardTransport, false };
+        juce::ResamplingAudioSource reverseResampler { &reverseTransport, false };
+
+        double currentSampleRate = 44100.0;
+        bool isReversedFlag = false;
+
+        bool isDraggingPosSlider = false;
+        bool remixReady = false;
+
 
 };

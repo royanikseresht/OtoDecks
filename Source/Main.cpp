@@ -59,7 +59,9 @@ public:
                               DocumentWindow::allButtons)
         {
             setUsingNativeTitleBar (true);
-            setContentOwned (new MainComponent(), true);
+            auto mainComp = std::make_unique<MainComponent>();
+            setContentOwned(mainComp.release(), true);
+
 
            #if JUCE_IOS || JUCE_ANDROID
             setFullScreen (true);

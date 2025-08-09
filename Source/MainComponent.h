@@ -14,7 +14,8 @@
 */
 
 
-class MainComponent  :  public juce::AudioAppComponent
+class MainComponent  :  public juce::AudioAppComponent,
+                        private juce::Timer
 
 {
 public:
@@ -34,6 +35,8 @@ public:
 private:
     //==============================================================================
     // Your private member variables go here...
+    void timerCallback() override; 
+
     ModernLookAndFeel modernLookAndFeel;
 
     juce::AudioFormatManager formatManager;

@@ -17,6 +17,7 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player, juce::AudioFormatManager& _formatManage
 {
     addAndMakeVisible(playButton);
     addAndMakeVisible(stopButton);
+    addAndMakeVisible(reverseButton);
     addAndMakeVisible(loadButton);
     addAndMakeVisible(playSelectedButton);
     addAndMakeVisible(loadPlaylistButton);
@@ -60,6 +61,7 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player, juce::AudioFormatManager& _formatManage
     // Listeners
     playButton.addListener(this);
     stopButton.addListener(this);
+    reverseButton.addListener(this);
     loadButton.addListener(this);
     volSlider.addListener(this);
     speedSlider.addListener(this);
@@ -70,11 +72,11 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player, juce::AudioFormatManager& _formatManage
     twiceSpeedButton.addListener(this);
 
     // Slider Ranges
-    posSlider.setRange(0.0, 1.0);
+    posSlider.setRange(0.0, 1.0, 0.0);
     speedSlider.setRange(0.05, 2, 0.05);
     volSlider.setRange(0, 1, 0.01);
 
-    startTimer(500);
+    startTimerHz(30);  // 30 times per second (about every 33 ms)
 
     // Default Values for Sliders
     volSlider.setValue(1);
@@ -86,6 +88,18 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player, juce::AudioFormatManager& _formatManage
     twiceSpeedButton.setClickingTogglesState(true);
     twiceSpeedButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffd5d5da));
 
+
+    posSlider.onDragStart = [this]() { isDraggingPosSlider = true; };
+    posSlider.onDragEnd = [this]() {
+        isDraggingPosSlider = false;
+        player->setPositionRelative(posSlider.getValue());
+    };
+
+    // ✅ Add this right here:
+    posSlider.onValueChange = [this]() {
+        if (isDraggingPosSlider)
+            player->setPositionRelative(posSlider.getValue());
+    };
 }
 
 DeckGUI::~DeckGUI()
@@ -121,8 +135,10 @@ void DeckGUI::resized()
     double columnW = getWidth() / 16;
 
     // Button Bounds
-    playButton.setBounds(columnW * 4, rowH, columnW * 4, rowH * 2);
-    stopButton.setBounds(columnW * 8, rowH, columnW * 4, rowH * 2);
+    playButton.setBounds(columnW * 4, rowH, columnW * 2.66, rowH * 2);
+    stopButton.setBounds(columnW * 6.7, rowH, columnW * 2.66, rowH * 2);
+    reverseButton.setBounds(columnW * 9.4, rowH, columnW * 2.66, rowH * 2);
+
     playSelectedButton.setBounds(columnW * 4, rowH * 3, columnW * 8, rowH * 2);
     muteButton.setBounds(0, rowH * 4, columnW * 4, rowH);
     twiceSpeedButton.setBounds(columnW * 12, rowH * 4, columnW * 4, rowH);
@@ -161,13 +177,27 @@ void DeckGUI::buttonClicked(juce::Button* button)
 {
     if (button == &playButton)
     {
-        player->start();
-
+        if (player != nullptr)
+        {
+            player->start();
+        }
     }
 
     if (button == &stopButton)
     {
-        player->stop();
+        if (player != nullptr)
+        {
+            player->stop();
+        }
+    }
+    
+
+    if (button == &reverseButton)
+    {
+        if (player != nullptr)
+        {
+            player->startReverse();
+        }
     }
 
     // Loads and plays a track
@@ -312,8 +342,16 @@ void DeckGUI::sliderValueChanged(juce::Slider* slider)
 
 void DeckGUI::timerCallback()
 {
-    waveformDisplay.setPositionRelative(player->getPositionRelative());
-    posSlider.setValue(player->getPositionRelative());
+    // Get position from player only once
+    double pos = player->getPositionRelative();
+
+    // Update slider only if the user isn't dragging it
+    if (!isDraggingPosSlider)
+        posSlider.setValue(pos, juce::dontSendNotification);
+
+    // Update waveform with the same value
+    waveformDisplay.setPositionRelative(pos);
+
+    // Update your track timer
     trackListComponent.updateTimer(player->sendTimer());
 }
-

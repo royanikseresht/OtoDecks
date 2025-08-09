@@ -43,10 +43,13 @@ public:
 
     void timerCallback() override;
 
+    WaveformDisplay waveformDisplay;
+
 private:
 
     juce::TextButton playButton{ "PLAY" };
     juce::TextButton stopButton{ "STOP" };
+    juce::TextButton reverseButton{ "REVERSE" };
     juce::TextButton loadButton{ "LOAD AND PLAY" };
     juce::TextButton playSelectedButton{ "PLAY PREPARED TRACK" };
     juce::TextButton muteButton{ "MUTE" };
@@ -64,11 +67,13 @@ private:
 
     DJAudioPlayer* player;
     PlaylistComponent* playlist;
-    WaveformDisplay waveformDisplay;
     
     TrackListComponent trackListComponent{ player, &waveformDisplay };
 
     ModernLookAndFeel modernLNF;
+
+    juce::SmoothedValue<double> smoothedPosition;
+    bool isDraggingPosSlider = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DeckGUI)
 };
