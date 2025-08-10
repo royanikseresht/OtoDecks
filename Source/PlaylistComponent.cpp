@@ -310,6 +310,61 @@ juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int c
     return existingComponentToUpdate;
 }
 
+void PlaylistComponent::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& e)
+{
+    // Select the row immediately (Finder-style)
+    tableComponent.selectRow(rowNumber, false, true);
+
+    if (e.mods.isPopupMenu()) // Right click
+    {
+        juce::PopupMenu menu;
+        menu.addItem(1, "Prepare to Play");
+        menu.addSeparator();
+        menu.addItem(2, "Remove Track");
+        menu.addSeparator();
+        menu.addItem(3, "Suggest Mix");
+
+        menu.showMenuAsync(
+            juce::PopupMenu::Options()
+                .withTargetComponent(&tableComponent)
+                .withTargetScreenArea({ e.getScreenPosition().x, e.getScreenPosition().y, 1, 1 }),
+            [this, rowNumber](int result)
+            {
+                if (result <= 0) return; // cancelled
+
+                if (result == 1) // Prepare to Play
+                {
+                    if (rowNumber >= 0 && rowNumber < trackPaths.size())
+                    {
+                        selectedTrackPath = trackPaths[rowNumber];
+                        selectedTrack = convertTrackPathToTitle(selectedTrackPath.toStdString());
+                        prepareLabel1.setText("SELECTED TRACK : " + selectedTrack, juce::dontSendNotification);
+                    }
+                }
+                else if (result == 2) // Remove Track
+                {
+                    if (rowNumber >= 0 && rowNumber < trackPaths.size())
+                    {
+                        CSVOperator::removeTrack(rowNumber);
+                        refreshPlaylist();
+                    }
+                }
+                else if (result == 3) // Suggest Mix
+                {
+                    int suggestion = suggestNextTrack(rowNumber);
+                    if (suggestion >= 0)
+                    {
+                        tableComponent.selectRow(suggestion, true, true);
+                        selectedTrackPath = trackPaths[suggestion];
+                        selectedTrack = convertTrackPathToTitle(selectedTrackPath.toStdString());
+                        prepareLabel1.setText("SUGGESTED MIX: " + selectedTrack, juce::dontSendNotification);
+                    }
+                }
+            }
+        );
+    }
+}
+
 void PlaylistComponent::populateTrackTitles()
 {
     trackTitles.clear();
@@ -421,6 +476,7 @@ void PlaylistComponent::buttonClicked(juce::Button* button)
         }
     }
 }
+
 
 void PlaylistComponent::analyzeTrackBPMs()
 {
