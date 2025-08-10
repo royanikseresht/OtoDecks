@@ -170,7 +170,6 @@ void DeckGUI::resized()
 
     waveformDisplay.setBounds(columnW * 0.1, rowH * 16, columnW * 15.8, rowH * 3);
 
-
 }
 
 void DeckGUI::buttonClicked(juce::Button* button)

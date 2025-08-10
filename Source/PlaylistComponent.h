@@ -18,8 +18,7 @@
 //==============================================================================
 class PlaylistComponent  : public juce::Component,
                             public juce::TableListBoxModel,
-                            public juce::Button::Listener,
-                            public juce::MouseListener
+                            public juce::Button::Listener
 {
 public:
     PlaylistComponent();
@@ -50,6 +49,8 @@ public:
     juce::String selectedTrack { "Nothing Selected" };
     std::vector<juce::String> trackTitles;
     std::vector<std::string> trackPaths;
+
+    void rebuildFilteredList(); 
 
 private:
     // === Playlist data ===
@@ -90,6 +91,15 @@ private:
     juce::String lastSearch;
 
     std::vector<TrackInfo> tracks;
+
+
+    juce::ToggleButton allTracksToggle;
+    juce::ToggleButton favoritesToggle;
+
+    enum class FilterMode { All, Favorites };
+    FilterMode currentFilter = FilterMode::All;
+
+    std::vector<int> filteredTrackIndices;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlaylistComponent)
 };

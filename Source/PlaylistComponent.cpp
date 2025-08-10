@@ -1,6 +1,6 @@
 #include <JuceHeader.h>
 #include "PlaylistComponent.h"
-#include "CSVOperator.h"  // Include your updated CSVOperator
+#include "CSVOperator.h" 
 #include <iostream> 
 
 //==============================================================================
@@ -105,7 +105,44 @@ PlaylistComponent::PlaylistComponent()
     searchButton.addListener(this);
     suggestMixButton.addListener(this);
     suggestMixButton.setButtonText("Suggest Mix");
-    
+
+    allTracksToggle.setButtonText("All Tracks");
+    favoritesToggle.setButtonText("Favorites");
+
+    addAndMakeVisible(allTracksToggle);
+    addAndMakeVisible(favoritesToggle);
+
+    allTracksToggle.setColour(juce::ToggleButton::textColourId, juce::Colours::black);
+    favoritesToggle.setColour(juce::ToggleButton::textColourId, juce::Colours::black);
+    allTracksToggle.setColour(juce::ToggleButton::tickColourId, juce::Colours::black);
+    favoritesToggle.setColour(juce::ToggleButton::tickColourId, juce::Colours::black);
+
+    allTracksToggle.setToggleState(true, juce::dontSendNotification); // default
+    favoritesToggle.setToggleState(false, juce::dontSendNotification);
+
+    currentFilter = FilterMode::All;
+    rebuildFilteredList();
+    tableComponent.updateContent();
+
+    allTracksToggle.onClick = [this]() {
+        if (allTracksToggle.getToggleState())
+        {
+            favoritesToggle.setToggleState(false, juce::dontSendNotification);
+            currentFilter = FilterMode::All;
+            rebuildFilteredList();
+            tableComponent.updateContent();
+        }
+    };
+
+    favoritesToggle.onClick = [this]() {
+        if (favoritesToggle.getToggleState())
+        {
+            allTracksToggle.setToggleState(false, juce::dontSendNotification);
+            currentFilter = FilterMode::Favorites;
+            rebuildFilteredList();
+            tableComponent.updateContent();
+        }
+    };
 
     formatManager.registerBasicFormats();
 }
@@ -139,6 +176,9 @@ void PlaylistComponent::refreshPlaylist()
     tracks = CSVOperator::loadAllTracks();
     populateTrackTitles();
     analyzeTrackBPMs();
+
+    rebuildFilteredList();
+
     tableComponent.updateContent();
     tableComponent.repaint();
 }
@@ -155,13 +195,13 @@ void PlaylistComponent::paint(juce::Graphics& g)
     juce::Rectangle<float> prepareArea(getWidth() * 0.3f, getHeight() * 0.68f, getWidth() * 0.4f, getHeight() * 0.31f);
     g.fillRect(prepareArea);
 
-    prepareLabel1.setColour(juce::Label::textColourId, juce::Colours::white);
+    prepareLabel1.setColour(juce::Label::textColourId, juce::Colours::black);
     prepareLabel1.setFont(juce::Font(20.0f));
     prepareLabel1.setText(selectedTrack, juce::dontSendNotification);
     prepareLabel1.setJustificationType(juce::Justification::centred);
     prepareLabel1.setBounds(getWidth() * 0.25f, getHeight() * 0.80f, getWidth() * 0.5f, getHeight() * 0.1f);
 
-    prepareLabel2.setColour(juce::Label::textColourId, juce::Colours::white);
+    prepareLabel2.setColour(juce::Label::textColourId, juce::Colours::black);
     prepareLabel2.setFont(juce::Font(14.0f));
     prepareLabel2.setText("PREPARED TRACK", juce::dontSendNotification);
     prepareLabel2.setJustificationType(juce::Justification::centred);
@@ -177,7 +217,20 @@ void PlaylistComponent::paint(juce::Graphics& g)
 
 void PlaylistComponent::resized()
 {
-    tableComponent.setBounds(0, 0, getWidth(), getHeight() * 0.67f);
+    int toggleWidth = 120;
+    int toggleHeight = 25;
+    int toggleY = 5;
+    int toggleSpacing = 10;
+    int togglesAreaHeight = toggleHeight + 10; // total height for toggles row
+
+    // Set toggles first
+    allTracksToggle.setBounds(10, toggleY, toggleWidth, toggleHeight);
+    favoritesToggle.setBounds(10 + toggleWidth + toggleSpacing, toggleY, toggleWidth, toggleHeight);
+
+    // Table below the toggles
+    tableComponent.setBounds(0, togglesAreaHeight, getWidth(), getHeight() * 0.67f - togglesAreaHeight);
+
+    // Column widths
     tableComponent.getHeader().setColumnWidth(1, getWidth() / 4);
     tableComponent.getHeader().setColumnWidth(2, getWidth() / 16);
     tableComponent.getHeader().setColumnWidth(3, getWidth() / 8);
@@ -188,7 +241,7 @@ void PlaylistComponent::resized()
 
 int PlaylistComponent::getNumRows()
 {
-    return (int)trackTitles.size();
+    return (int)filteredTrackIndices.size();
 }
 
 void PlaylistComponent::paintRowBackground(juce::Graphics& g, int rowNumber, int width, int height, bool rowIsSelected)
@@ -198,12 +251,16 @@ void PlaylistComponent::paintRowBackground(juce::Graphics& g, int rowNumber, int
 
 void PlaylistComponent::paintCell(juce::Graphics& g, int rowNumber, int columnId, int width, int height, bool)
 {
-    if (rowNumber >= (int)trackTitles.size())
+    if (rowNumber >= (int)filteredTrackIndices.size())
         return;
 
     if (columnId == 1)
     {
-        g.drawText(trackTitles[rowNumber], 2, 0, width - 4, height, juce::Justification::centredLeft, true);
+        int trackIndex = filteredTrackIndices[rowNumber];
+        juce::String trackName = convertTrackPathToTitle(tracks[trackIndex].path);
+
+
+        g.drawText(trackName, 2, 0, width - 4, height, juce::Justification::centredLeft, true);
     }
     else if (columnId == 2)
     {
@@ -253,7 +310,7 @@ void PlaylistComponent::paintCell(juce::Graphics& g, int rowNumber, int columnId
 
 juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int columnID, bool, juce::Component* existingComponentToUpdate)
 {
-    if (rowNumber >= (int)trackTitles.size())
+    if (rowNumber >= (int)filteredTrackIndices.size())
         return nullptr;
 
     if (columnID == 3 && existingComponentToUpdate == nullptr)
@@ -308,7 +365,9 @@ juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int c
         static std::unique_ptr<juce::XmlElement> outlineHeartXml = juce::parseXML(juce::String(heartOutlineSVG));
         static std::unique_ptr<juce::Drawable> outlineHeart = outlineHeartXml ? juce::Drawable::createFromSVG(*outlineHeartXml) : nullptr;
 
-        bool fav = isFavorite[rowNumber];
+        int trackIndex = filteredTrackIndices[rowNumber];
+        bool fav = isFavorite[trackIndex];
+
         heartButton->setToggleState(fav, juce::dontSendNotification);
 
         heartButton->setImages(fav ? filledHeart.get() : outlineHeart.get());
@@ -339,7 +398,7 @@ juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int c
 
 void PlaylistComponent::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& e)
 {
-    if (rowNumber < 0 || rowNumber >= (int)trackTitles.size())
+    if (rowNumber < 0 || rowNumber >= (int)filteredTrackIndices.size())
         return;
 
     tableComponent.selectRow(rowNumber, false, true);
@@ -509,4 +568,25 @@ int PlaylistComponent::suggestNextTrack(int currentIndex)
     }
 
     return bestIndex;
+}
+
+void PlaylistComponent::rebuildFilteredList()
+{
+    filteredTrackIndices.clear();
+
+    if (currentFilter == FilterMode::All)
+    {
+        // Show all tracks
+        for (int i = 0; i < (int)trackTitles.size(); ++i)
+            filteredTrackIndices.push_back(i);
+    }
+    else if (currentFilter == FilterMode::Favorites)
+    {
+        // Show only favorites
+        for (int i = 0; i < (int)isFavorite.size(); ++i)
+        {
+            if (isFavorite[i])
+                filteredTrackIndices.push_back(i);
+        }
+    }
 }
