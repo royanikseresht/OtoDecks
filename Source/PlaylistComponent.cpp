@@ -1,5 +1,6 @@
 #include <JuceHeader.h>
 #include "PlaylistComponent.h"
+#include "CSVOperator.h"  // Include your updated CSVOperator
 #include <iostream> 
 
 //==============================================================================
@@ -21,7 +22,6 @@ static const char* heartOutlineSVG = R"(
     C13.46,6,14.96,5,16.5,5C18.5,5,20,6.5,20,8.5C20,11.39,16.86,14.24,12.1,18.55z"/>
 </svg>
 )";
-
 
 class BPMAnalysisJob : public juce::ThreadPoolJob
 {
@@ -62,7 +62,6 @@ public:
             }
         }
 
-        // Run callback on the message thread
         juce::MessageManager::callAsync([cb = callback, results = std::move(results)] {
             cb(results);
         });
@@ -75,18 +74,20 @@ private:
     std::function<void(std::vector<std::pair<float, juce::String>>)> callback;
 };
 
+//--------------------------
+
 PlaylistComponent::PlaylistComponent()
 {
-    trackPaths = CSVOperator::returnTrackPathsArray();
+    tracks = CSVOperator::loadAllTracks();  // load all track info from CSV
     populateTrackTitles();
     analyzeTrackBPMs();
 
     tableComponent.getHeader().addColumn("Title", 1, 200);
-    tableComponent.getHeader().addColumn("Length", 2, 200);
-    tableComponent.getHeader().addColumn("", 3, 400);
-    tableComponent.getHeader().addColumn("BPM", 4, 100);
-    tableComponent.getHeader().addColumn("Notes", 5, 400);     // 🆕 Notes column
-    tableComponent.getHeader().addColumn("Favorites", 6, 60); 
+    tableComponent.getHeader().addColumn("Length", 2, 100);
+    tableComponent.getHeader().addColumn("", 3, 150);
+    tableComponent.getHeader().addColumn("BPM", 4, 60);
+    tableComponent.getHeader().addColumn("Notes", 5, 200);
+    tableComponent.getHeader().addColumn("Favorites", 6, 60);
 
     tableComponent.setModel(this);
 
@@ -97,71 +98,97 @@ PlaylistComponent::PlaylistComponent()
     addAndMakeVisible(removeTrackButton);
     addAndMakeVisible(searchBox);
     addAndMakeVisible(searchButton);
+    addAndMakeVisible(suggestMixButton);
 
     addTrackButton.addListener(this);
     removeTrackButton.addListener(this);
     searchButton.addListener(this);
-
-    addAndMakeVisible(suggestMixButton);
-    suggestMixButton.setButtonText("Suggest Mix");
     suggestMixButton.addListener(this);
+    suggestMixButton.setButtonText("Suggest Mix");
+    
 
     formatManager.registerBasicFormats();
 }
 
 PlaylistComponent::~PlaylistComponent() {}
 
+void PlaylistComponent::populateTrackTitles()
+{
+    trackTitles.clear();
+    trackNotes.clear();
+    isFavorite.clear();
+    trackPaths.clear();
+
+    for (const auto& track : tracks)
+    {
+        trackTitles.push_back(convertTrackPathToTitle(track.path).toStdString());
+        trackNotes.push_back(track.note);
+        isFavorite.push_back(track.favorite);
+        trackPaths.push_back(track.path);
+    }
+}
+
+juce::String PlaylistComponent::convertTrackPathToTitle(const std::string& path)
+{
+    juce::File file(path);
+    return file.getFileNameWithoutExtension();
+}
+
+void PlaylistComponent::refreshPlaylist()
+{
+    tracks = CSVOperator::loadAllTracks();
+    populateTrackTitles();
+    analyzeTrackBPMs();
+    tableComponent.updateContent();
+    tableComponent.repaint();
+}
+
 void PlaylistComponent::paint(juce::Graphics& g)
 {
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
     g.setColour(juce::Colours::black);
-    juce::Rectangle<float> prepareBorder(getWidth() * 0.295, getHeight() * 0.65, getWidth() * 0.41, getHeight() * 0.35);
+    juce::Rectangle<float> prepareBorder(getWidth() * 0.295f, getHeight() * 0.65f, getWidth() * 0.41f, getHeight() * 0.35f);
     g.fillRect(prepareBorder);
 
     g.setColour(juce::Colour(0xffd5d5da));
-    juce::Rectangle<float> prepareArea(getWidth() * 0.3, getHeight() * 0.68, getWidth() * 0.4, getHeight() * 0.31);
+    juce::Rectangle<float> prepareArea(getWidth() * 0.3f, getHeight() * 0.68f, getWidth() * 0.4f, getHeight() * 0.31f);
     g.fillRect(prepareArea);
 
-    // PREPARE TO PLAY TEXT
     prepareLabel1.setColour(juce::Label::textColourId, juce::Colours::white);
     prepareLabel1.setFont(juce::Font(20.0f));
     prepareLabel1.setText(selectedTrack, juce::dontSendNotification);
     prepareLabel1.setJustificationType(juce::Justification::centred);
-    prepareLabel1.setBounds(getWidth() * 0.25, getHeight() * 0.80, getWidth() * 0.5, getHeight() * 0.1);
+    prepareLabel1.setBounds(getWidth() * 0.25f, getHeight() * 0.80f, getWidth() * 0.5f, getHeight() * 0.1f);
 
     prepareLabel2.setColour(juce::Label::textColourId, juce::Colours::white);
     prepareLabel2.setFont(juce::Font(14.0f));
     prepareLabel2.setText("PREPARED TRACK", juce::dontSendNotification);
     prepareLabel2.setJustificationType(juce::Justification::centred);
-    prepareLabel2.setBounds(getWidth() * 0.3, getHeight() * 0.72, getWidth() * 0.4, getHeight() * 0.1);
+    prepareLabel2.setBounds(getWidth() * 0.3f, getHeight() * 0.72f, getWidth() * 0.4f, getHeight() * 0.1f);
 
-    // UI LAYOUT
-    addTrackButton.setBounds(getWidth() * 0.72, getHeight() * 0.68, getWidth() * 0.25, getHeight() * 0.08);
-    removeTrackButton.setBounds(getWidth() * 0.72, getHeight() * 0.80, getWidth() * 0.25, getHeight() * 0.08);
-    suggestMixButton.setBounds(getWidth() * 0.72, getHeight() * 0.92, getWidth() * 0.25, getHeight() * 0.08);
+    addTrackButton.setBounds(getWidth() * 0.72f, getHeight() * 0.68f, getWidth() * 0.25f, getHeight() * 0.08f);
+    removeTrackButton.setBounds(getWidth() * 0.72f, getHeight() * 0.80f, getWidth() * 0.25f, getHeight() * 0.08f);
+    suggestMixButton.setBounds(getWidth() * 0.72f, getHeight() * 0.92f, getWidth() * 0.25f, getHeight() * 0.08f);
 
-    searchBox.setBounds(getWidth() * 0.02, getHeight() * 0.70, getWidth() * 0.25, getHeight() * 0.1);
-    searchButton.setBounds(getWidth() * 0.15, getHeight() * 0.82, getWidth() * 0.12, getHeight() * 0.1);
-
-
+    searchBox.setBounds(getWidth() * 0.02f, getHeight() * 0.70f, getWidth() * 0.25f, getHeight() * 0.1f);
+    searchButton.setBounds(getWidth() * 0.15f, getHeight() * 0.82f, getWidth() * 0.12f, getHeight() * 0.1f);
 }
 
 void PlaylistComponent::resized()
 {
-    tableComponent.setBounds(0, 0, getWidth(), getHeight() * 0.67);
+    tableComponent.setBounds(0, 0, getWidth(), getHeight() * 0.67f);
     tableComponent.getHeader().setColumnWidth(1, getWidth() / 4);
     tableComponent.getHeader().setColumnWidth(2, getWidth() / 16);
     tableComponent.getHeader().setColumnWidth(3, getWidth() / 8);
     tableComponent.getHeader().setColumnWidth(4, getWidth() / 16);
     tableComponent.getHeader().setColumnWidth(5, getWidth() / 2.35);
     tableComponent.getHeader().setColumnWidth(6, getWidth() / 16);
-    
 }
 
 int PlaylistComponent::getNumRows()
 {
-    return trackTitles.size();
+    return (int)trackTitles.size();
 }
 
 void PlaylistComponent::paintRowBackground(juce::Graphics& g, int rowNumber, int width, int height, bool rowIsSelected)
@@ -171,6 +198,9 @@ void PlaylistComponent::paintRowBackground(juce::Graphics& g, int rowNumber, int
 
 void PlaylistComponent::paintCell(juce::Graphics& g, int rowNumber, int columnId, int width, int height, bool)
 {
+    if (rowNumber >= (int)trackTitles.size())
+        return;
+
     if (columnId == 1)
     {
         g.drawText(trackTitles[rowNumber], 2, 0, width - 4, height, juce::Justification::centredLeft, true);
@@ -182,7 +212,7 @@ void PlaylistComponent::paintCell(juce::Graphics& g, int rowNumber, int columnId
 
         if (auto* reader = formatManager.createReaderFor(filepath))
         {
-            lengthInSeconds = reader->lengthInSamples / reader->sampleRate;
+            lengthInSeconds = (int)(reader->lengthInSamples / reader->sampleRate);
             delete reader;
 
             juce::String formattedTime = TrackListComponent::convertSecondsToTimer(lengthInSeconds);
@@ -200,7 +230,6 @@ void PlaylistComponent::paintCell(juce::Graphics& g, int rowNumber, int columnId
             float bpm = trackMetadata[rowNumber].first;
             if (bpm > 0.0f)
             {
-                // Normal BPM styling
                 g.setColour(juce::Colours::black);
                 g.setFont(juce::Font(14.0f, juce::Font::plain));
                 juce::String bpmText = juce::String(bpm, 1);
@@ -208,7 +237,6 @@ void PlaylistComponent::paintCell(juce::Graphics& g, int rowNumber, int columnId
             }
             else
             {
-                // BPM not found
                 g.setColour(juce::Colours::lightgrey);
                 g.setFont(juce::Font(14.0f, juce::Font::italic));
                 g.drawText("N/A", 2, 0, width - 4, height, juce::Justification::centredLeft, true);
@@ -216,17 +244,18 @@ void PlaylistComponent::paintCell(juce::Graphics& g, int rowNumber, int columnId
         }
         else
         {
-            // Still loading BPM
             g.setColour(juce::Colours::lightgrey);
             g.setFont(juce::Font(14.0f, juce::Font::italic));
             g.drawText("Loading...", 2, 0, width - 4, height, juce::Justification::centredLeft, true);
         }
     }
-
 }
 
 juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int columnID, bool, juce::Component* existingComponentToUpdate)
 {
+    if (rowNumber >= (int)trackTitles.size())
+        return nullptr;
+
     if (columnID == 3 && existingComponentToUpdate == nullptr)
     {
         auto* btn = new juce::TextButton("Prepare To Play");
@@ -234,12 +263,8 @@ juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int c
         btn->addListener(this);
         return btn;
     }
-
-    else if (columnID == 5) // Notes
+    else if (columnID == 5) // Notes column
     {
-        if (rowNumber >= trackNotes.size())
-            return nullptr;
-
         auto* noteLabel = dynamic_cast<juce::Label*>(existingComponentToUpdate);
         if (noteLabel == nullptr)
             noteLabel = new juce::Label();
@@ -249,14 +274,22 @@ juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int c
 
         noteLabel->onTextChange = [this, noteLabel, rowNumber]()
         {
-            if (rowNumber < trackNotes.size())
+            if (rowNumber < (int)trackNotes.size())
+            {
                 trackNotes[rowNumber] = noteLabel->getText();
+
+                // Update CSV and internal struct immediately
+                if (rowNumber < (int)tracks.size())
+                {
+                    tracks[rowNumber].note = trackNotes[rowNumber].toStdString();
+                    CSVOperator::saveAllTracks(tracks);
+                }
+            }
         };
 
         return noteLabel;
     }
-
-    else if (columnID == 6) // Favorite (heart button)
+    else if (columnID == 6) // Favorite column with heart button
     {
         auto* heartButton = dynamic_cast<juce::DrawableButton*>(existingComponentToUpdate);
         if (heartButton == nullptr)
@@ -267,41 +300,35 @@ juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int c
 
             heartButton->setColour(juce::DrawableButton::backgroundColourId, juce::Colours::transparentBlack);
             heartButton->setColour(juce::DrawableButton::backgroundOnColourId, juce::Colours::transparentBlack);
-            
-            // Set background colour for normal (off) state
-            heartButton->setColour(juce::DrawableButton::backgroundColourId, juce::Colours::transparentBlack);
-            // Set background colour for toggled (on) state
-            heartButton->setColour(juce::DrawableButton::backgroundOnColourId, juce::Colours::transparentBlack);
-
-
         }
 
-        // Load SVG drawables once (cache static/shared if you want for perf)
         static std::unique_ptr<juce::XmlElement> filledHeartXml = juce::parseXML(juce::String(heartFilledSVG));
         static std::unique_ptr<juce::Drawable> filledHeart = filledHeartXml ? juce::Drawable::createFromSVG(*filledHeartXml) : nullptr;
 
         static std::unique_ptr<juce::XmlElement> outlineHeartXml = juce::parseXML(juce::String(heartOutlineSVG));
         static std::unique_ptr<juce::Drawable> outlineHeart = outlineHeartXml ? juce::Drawable::createFromSVG(*outlineHeartXml) : nullptr;
 
+        bool fav = isFavorite[rowNumber];
+        heartButton->setToggleState(fav, juce::dontSendNotification);
 
-        if (isFavorite[rowNumber])
-            heartButton->setImages(filledHeart.get());
-        else
-            heartButton->setImages(outlineHeart.get());
+        heartButton->setImages(fav ? filledHeart.get() : outlineHeart.get());
 
-        heartButton->setToggleState(isFavorite[rowNumber], juce::dontSendNotification);
-
-        // Capture rowNumber copy for lambda
         heartButton->onClick = [this, heartButton, rowNumber]()
         {
             bool newState = heartButton->getToggleState();
             isFavorite[rowNumber] = newState;
 
-            // Update button image immediately
             if (newState)
                 heartButton->setImages(filledHeart.get());
             else
                 heartButton->setImages(outlineHeart.get());
+
+            // Update CSV and internal tracks vector immediately
+            if (rowNumber < (int)tracks.size())
+            {
+                tracks[rowNumber].favorite = newState;
+                CSVOperator::saveAllTracks(tracks);
+            }
         };
 
         return heartButton;
@@ -312,10 +339,12 @@ juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int c
 
 void PlaylistComponent::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& e)
 {
-    // Select the row immediately (Finder-style)
+    if (rowNumber < 0 || rowNumber >= (int)trackTitles.size())
+        return;
+
     tableComponent.selectRow(rowNumber, false, true);
 
-    if (e.mods.isPopupMenu()) // Right click
+    if (e.mods.isPopupMenu()) // Right click menu
     {
         juce::PopupMenu menu;
         menu.addItem(1, "Prepare to Play");
@@ -330,11 +359,11 @@ void PlaylistComponent::cellClicked(int rowNumber, int columnId, const juce::Mou
                 .withTargetScreenArea({ e.getScreenPosition().x, e.getScreenPosition().y, 1, 1 }),
             [this, rowNumber](int result)
             {
-                if (result <= 0) return; // cancelled
+                if (result <= 0) return;
 
                 if (result == 1) // Prepare to Play
                 {
-                    if (rowNumber >= 0 && rowNumber < trackPaths.size())
+                    if (rowNumber >= 0 && rowNumber < (int)trackPaths.size())
                     {
                         selectedTrackPath = trackPaths[rowNumber];
                         selectedTrack = convertTrackPathToTitle(selectedTrackPath.toStdString());
@@ -343,7 +372,7 @@ void PlaylistComponent::cellClicked(int rowNumber, int columnId, const juce::Mou
                 }
                 else if (result == 2) // Remove Track
                 {
-                    if (rowNumber >= 0 && rowNumber < trackPaths.size())
+                    if (rowNumber >= 0 && rowNumber < (int)trackPaths.size())
                     {
                         CSVOperator::removeTrack(rowNumber);
                         refreshPlaylist();
@@ -365,33 +394,6 @@ void PlaylistComponent::cellClicked(int rowNumber, int columnId, const juce::Mou
     }
 }
 
-void PlaylistComponent::populateTrackTitles()
-{
-    trackTitles.clear();
-    for (const std::string& s : trackPaths)
-    {
-        trackTitles.push_back(convertTrackPathToTitle(s));
-        trackNotes.push_back(" ... ");
-        isFavorite.push_back(false); // Default: not favorited
-
-    }
-}
-
-juce::String PlaylistComponent::convertTrackPathToTitle(std::string path)
-{
-    juce::File juceFilePath(path);
-    return juceFilePath.getFileNameWithoutExtension();
-}
-
-void PlaylistComponent::refreshPlaylist()
-{
-    trackPaths = CSVOperator::returnTrackPathsArray();
-    populateTrackTitles();
-    analyzeTrackBPMs();
-    tableComponent.updateContent();
-    tableComponent.repaint();
-}
-
 void PlaylistComponent::searchTracks(juce::String input)
 {
     if (input != lastSearch)
@@ -399,9 +401,9 @@ void PlaylistComponent::searchTracks(juce::String input)
 
     lastSearch = input;
 
-    for (int i = rowCounter + 1; i < trackTitles.size(); ++i)
+    for (int i = rowCounter + 1; i < (int)trackTitles.size(); ++i)
     {
-        if (trackTitles[i].containsIgnoreCase(input))
+        if (trackTitles[i].toLowerCase().contains(input.toLowerCase()))
         {
             tableComponent.selectRow(i, false, true);
             rowCounter = i;
@@ -417,12 +419,12 @@ void PlaylistComponent::buttonClicked(juce::Button* button)
     if (button->getButtonText() == "Prepare To Play")
     {
         int id = std::stoi(button->getComponentID().toStdString());
-        selectedTrackPath = trackPaths[id];
-        selectedTrack = convertTrackPathToTitle(selectedTrackPath.toStdString());
-        prepareLabel1.setText("SELECTED TRACK : " + selectedTrack, juce::dontSendNotification);
-
-        DBG("TrackName: " << selectedTrack);
-        DBG("TrackPath: " << selectedTrackPath);
+        if (id >= 0 && id < (int)trackPaths.size())
+        {
+            selectedTrackPath = trackPaths[id];
+            selectedTrack = convertTrackPathToTitle(selectedTrackPath.toStdString());
+            prepareLabel1.setText("SELECTED TRACK : " + selectedTrack, juce::dontSendNotification);
+        }
     }
 
     if (button == &addTrackButton)
@@ -468,21 +470,16 @@ void PlaylistComponent::buttonClicked(juce::Button* button)
             selectedTrackPath = trackPaths[suggestion];
             selectedTrack = convertTrackPathToTitle(selectedTrackPath.toStdString());
             prepareLabel1.setText("SUGGESTED MIX: " + selectedTrack, juce::dontSendNotification);
-            DBG("Suggested track index: " << suggestion);
-        }
-        else
-        {
-            DBG("No suggestion could be made.");
         }
     }
 }
 
-
 void PlaylistComponent::analyzeTrackBPMs()
 {
+    // Use trackPaths to analyze BPMs
     auto job = new BPMAnalysisJob(trackPaths, [this](std::vector<std::pair<float, juce::String>> result) {
         trackMetadata = std::move(result);
-        tableComponent.repaint(); // Or updateContent() if needed
+        tableComponent.repaint();
     });
 
     threadPool.addJob(job, true);
@@ -490,14 +487,14 @@ void PlaylistComponent::analyzeTrackBPMs()
 
 int PlaylistComponent::suggestNextTrack(int currentIndex)
 {
-    if (currentIndex < 0 || currentIndex >= trackMetadata.size())
+    if (currentIndex < 0 || currentIndex >= (int)trackMetadata.size())
         return -1;
 
     float currentBPM = trackMetadata[currentIndex].first;
     float minDiff = std::numeric_limits<float>::max();
     int bestIndex = -1;
 
-    for (int i = 0; i < trackMetadata.size(); ++i)
+    for (int i = 0; i < (int)trackMetadata.size(); ++i)
     {
         if (i == currentIndex || trackMetadata[i].first <= 0.0f)
             continue;

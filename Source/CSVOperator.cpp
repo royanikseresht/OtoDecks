@@ -2,93 +2,113 @@
 
 CSVOperator::CSVOperator()
 {
-    readTracksCSV();  // Ensures file exists
+    if (!getCSVFile().exists())
+        getCSVFile().create();  // Ensure file exists
 }
 
-std::vector<std::string> CSVOperator::returnTrackPathsArray()
+juce::File CSVOperator::getCSVFile()
+{
+    return juce::File::getCurrentWorkingDirectory().getChildFile("Tracks.csv");
+}
+
+std::vector<TrackInfo> CSVOperator::loadAllTracks()
 {
     return readTracksCSV();
 }
 
-std::vector<std::string> CSVOperator::readTracksCSV()
+void CSVOperator::saveAllTracks(const std::vector<TrackInfo>& tracks)
 {
-    std::vector<std::string> tracks;
+    writeTracksCSV(tracks);
+}
 
-    // Use forward slashes for cross-platform compatibility
-    juce::File tracksFile = juce::File::getCurrentWorkingDirectory().getChildFile("Tracks.csv");
+std::vector<TrackInfo> CSVOperator::readTracksCSV()
+{
+    std::vector<TrackInfo> tracks;
+
+    juce::File tracksFile = getCSVFile();
 
     if (!tracksFile.exists())
-    {
-        tracksFile.create();  // Create empty file if missing
-    }
+        return tracks;
 
     juce::FileInputStream csvFile(tracksFile);
 
-    if (csvFile.openedOk())
+    if (!csvFile.openedOk())
+        return tracks;
+
+    while (!csvFile.isExhausted())
     {
-        while (!csvFile.isExhausted())
-        {
-            try
-            {
-                juce::String juceLine = csvFile.readNextLine();
-                tracks.push_back(juceLine.toStdString());
-            }
-            catch (const std::exception& e)
-            {
-                DBG("CSVOperator::readTracksCSV error: " << e.what());
-            }
-        }
+        auto line = csvFile.readNextLine().trim();
+
+        if (line.isEmpty())
+            continue;
+
+        // CSV split on commas (basic, no escaping)
+        auto parts = juce::StringArray::fromTokens(line, ",", "");
+
+        TrackInfo info;
+        info.path = parts[0].toStdString();
+
+        if (parts.size() > 1)
+            info.bpm = parts[1].getFloatValue();
+
+        if (parts.size() > 2)
+            info.key = parts[2].toStdString();
+
+        if (parts.size() > 3)
+            info.favorite = (parts[3] == "1");
+
+        if (parts.size() > 4)
+            info.note = parts[4].toStdString();
+
+        tracks.push_back(std::move(info));
     }
 
     return tracks;
 }
 
-void CSVOperator::addNewTrack(juce::String path)
+void CSVOperator::writeTracksCSV(const std::vector<TrackInfo>& tracks)
 {
-    juce::File tracksFile = juce::File::getCurrentWorkingDirectory().getChildFile("Tracks.csv");
+    juce::File tracksFile = getCSVFile();
 
-    std::ofstream csvFile(tracksFile.getFullPathName().toStdString(), std::ios::app);
-    if (csvFile.is_open())
+    std::ofstream outFile(tracksFile.getFullPathName().toStdString(), std::ios::trunc);
+    if (!outFile.is_open())
     {
-        csvFile << path.toStdString() << std::endl;
-        csvFile.close();
+        DBG("CSVOperator: Failed to open CSV for writing");
+        return;
     }
-    else
+
+    for (const auto& track : tracks)
     {
-        DBG("Failed to open Tracks.csv for appending.");
+        // Escape commas in notes or paths if needed (simple version, wrap with quotes if comma found)
+        auto escapeCSV = [](const std::string& str) -> std::string
+        {
+            if (str.find(',') != std::string::npos)
+                return "\"" + str + "\"";
+            return str;
+        };
+
+        outFile << escapeCSV(track.path) << ",";
+        outFile << track.bpm << ",";
+        outFile << escapeCSV(track.key) << ",";
+        outFile << (track.favorite ? "1" : "0") << ",";
+        outFile << escapeCSV(track.note) << std::endl;
     }
+}
+
+void CSVOperator::addNewTrack(const juce::String& path)
+{
+    auto tracks = readTracksCSV();
+    TrackInfo newTrack(path.toStdString());
+    tracks.push_back(std::move(newTrack));
+    writeTracksCSV(tracks);
 }
 
 void CSVOperator::removeTrack(int rowNumber)
 {
-    juce::File originalFile = juce::File::getCurrentWorkingDirectory().getChildFile("Tracks.csv");
-    juce::File tempFile = juce::File::getCurrentWorkingDirectory().getChildFile("Temp.csv");
-
-    std::ifstream in(originalFile.getFullPathName().toStdString());
-    std::ofstream out(tempFile.getFullPathName().toStdString());
-
-    if (!in.is_open() || !out.is_open())
+    auto tracks = readTracksCSV();
+    if (rowNumber >= 0 && rowNumber < (int)tracks.size())
     {
-        DBG("Failed to open CSV files for deletion.");
-        return;
+        tracks.erase(tracks.begin() + rowNumber);
+        writeTracksCSV(tracks);
     }
-
-    std::string line;
-    int lineIndex = 0;
-
-    while (std::getline(in, line))
-    {
-        if (lineIndex != rowNumber)
-        {
-            out << line << std::endl;
-        }
-        lineIndex++;
-    }
-
-    in.close();
-    out.close();
-
-    // Replace original file
-    originalFile.deleteFile();
-    tempFile.moveFileTo(originalFile);
 }

@@ -44,7 +44,7 @@ public:
     void refreshPlaylist();
 
     // Converts a track path to track title
-    juce::String convertTrackPathToTitle(std::string path);
+    juce::String convertTrackPathToTitle(const std::string& path);
 
     juce::String selectedTrackPath;
     juce::String selectedTrack { "Nothing Selected" };
@@ -88,6 +88,8 @@ private:
     // Search helpers
     int rowCounter = -1;
     juce::String lastSearch;
+
+    std::vector<TrackInfo> tracks;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlaylistComponent)
 };

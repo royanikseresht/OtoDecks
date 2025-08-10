@@ -6,26 +6,41 @@
 #include <iostream>
 #include <vector>
 
+struct TrackInfo
+{
+    std::string path;
+    float bpm = 0.0f;
+    std::string key;
+    bool favorite = false;
+    std::string note;
+
+    TrackInfo() = default;
+    TrackInfo(const std::string& p) : path(p) {}
+};
 
 class CSVOperator
 {
-	public:
-		CSVOperator();
+public:
+    CSVOperator();
 
-		// Returns trackPaths array
-		static std::vector<std::string> returnTrackPathsArray();
+    // Returns all tracks info, including favorites and notes
+    static std::vector<TrackInfo> loadAllTracks();
 
-		// Adds a new Track to the CSV file
-		static void addNewTrack(juce::String path);
-		
-		// Removes a track from the CSV file
-		static void removeTrack(int rowNumber);
+    // Saves entire track list back to CSV (overwrites)
+    static void saveAllTracks(const std::vector<TrackInfo>& tracks);
 
-	private:
+    // Adds a new track with default metadata
+    static void addNewTrack(const juce::String& path);
 
-		// Reads the tracks CSV file and adds them to trackPaths Array
-		static std::vector<std::string> readTracksCSV();
-		
+    // Removes track at given index
+    static void removeTrack(int rowNumber);
 
-		
+private:
+    // Reads CSV line-by-line and parses TrackInfo objects
+    static std::vector<TrackInfo> readTracksCSV();
+
+    // Writes vector of TrackInfo to CSV file
+    static void writeTracksCSV(const std::vector<TrackInfo>& tracks);
+
+    static juce::File getCSVFile();
 };
