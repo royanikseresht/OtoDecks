@@ -95,7 +95,6 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player, juce::AudioFormatManager& _formatManage
         player->setPositionRelative(posSlider.getValue());
     };
 
-    // ✅ Add this right here:
     posSlider.onValueChange = [this]() {
         if (isDraggingPosSlider)
             player->setPositionRelative(posSlider.getValue());
@@ -109,13 +108,6 @@ DeckGUI::~DeckGUI()
 
 void DeckGUI::paint (juce::Graphics& g)
 {
-    /* This demo code just fills the component's background and
-       draws some placeholder text to get you started.
-
-       You should replace everything in this method with your own
-       drawing code..
-    */
-
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
 
     g.setColour (juce::Colour(0xffd5d5da));
@@ -124,7 +116,6 @@ void DeckGUI::paint (juce::Graphics& g)
 
     g.setColour (juce::Colours::white);
     g.setFont (14.0f);
-
 }
 
 void DeckGUI::resized()

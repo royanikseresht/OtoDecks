@@ -41,7 +41,8 @@ target_sources(FinalJuceVSCodeApp PRIVATE
     Source/WaveformDisplay.cpp
     Source/WaveformDisplay.h
     Source/MemoryAudioSource.h
-
+    Source/AudioRecorder.h 
+    Source/RecordToggleSwitch.h
 )
 
 # Disable unused JUCE modules

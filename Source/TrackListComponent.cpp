@@ -47,27 +47,17 @@ TrackListComponent::~TrackListComponent()
     stopTimer();
 }
 
-void TrackListComponent::paint (juce::Graphics& g)
+void TrackListComponent::paint(juce::Graphics& g)
 {
-    /* This demo code just fills the component's background and
-       draws some placeholder text to get you started.
-
-       You should replace everything in this method with your own
-       drawing code..
-    */
-
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
+    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
     g.setColour(juce::Colours::black);
-    juce::Rectangle<float> prepareBorder(getWidth() * 0.03, getHeight() * 0.05, getWidth() * 0.92, getHeight() * 0.83);
-    g.fillRect(prepareBorder);
+    juce::Rectangle<float> prepareBorder(getWidth() * 0.03f, getHeight() * 0.05f, getWidth() * 0.92f, getHeight() * 0.83f);
+    g.fillRoundedRectangle(prepareBorder, 10.0f); // 10px corner radius
 
     g.setColour(juce::Colour(0xffd5d5da));
-    juce::Rectangle<float> prepareArea(getWidth() * 0.035, getHeight() * 0.06, getWidth() * 0.91, getHeight() * 0.81);
-    g.fillRect(prepareArea);
-
-
-
+    juce::Rectangle<float> prepareArea(getWidth() * 0.035f, getHeight() * 0.06f, getWidth() * 0.91f, getHeight() * 0.81f);
+    g.fillRoundedRectangle(prepareArea, 10.0f); // same radius so they align
 }
 
 void TrackListComponent::resized()

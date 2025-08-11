@@ -212,7 +212,7 @@ void PlaylistComponent::paint(juce::Graphics& g)
     suggestMixButton.setBounds(getWidth() * 0.72f, getHeight() * 0.92f, getWidth() * 0.25f, getHeight() * 0.08f);
 
     searchBox.setBounds(getWidth() * 0.02f, getHeight() * 0.70f, getWidth() * 0.25f, getHeight() * 0.1f);
-    searchButton.setBounds(getWidth() * 0.15f, getHeight() * 0.82f, getWidth() * 0.12f, getHeight() * 0.1f);
+    searchButton.setBounds(getWidth() * 0.02f, getHeight() * 0.82f, getWidth() * 0.12f, getHeight() * 0.1f);
 }
 
 void PlaylistComponent::resized()
@@ -326,19 +326,21 @@ juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int c
         if (noteLabel == nullptr)
             noteLabel = new juce::Label();
 
-        noteLabel->setEditable(true);
-        noteLabel->setText(trackNotes[rowNumber], juce::dontSendNotification);
+        int originalIndex = filteredTrackIndices[rowNumber];  // Map filtered row to original track index
 
-        noteLabel->onTextChange = [this, noteLabel, rowNumber]()
+        noteLabel->setEditable(true);
+        noteLabel->setText(trackNotes[originalIndex], juce::dontSendNotification);
+
+        noteLabel->onTextChange = [this, noteLabel, originalIndex]()
         {
-            if (rowNumber < (int)trackNotes.size())
+            if (originalIndex < (int)trackNotes.size())
             {
-                trackNotes[rowNumber] = noteLabel->getText();
+                trackNotes[originalIndex] = noteLabel->getText();
 
                 // Update CSV and internal struct immediately
-                if (rowNumber < (int)tracks.size())
+                if (originalIndex < (int)tracks.size())
                 {
-                    tracks[rowNumber].note = trackNotes[rowNumber].toStdString();
+                    tracks[originalIndex].note = trackNotes[originalIndex].toStdString();
                     CSVOperator::saveAllTracks(tracks);
                 }
             }

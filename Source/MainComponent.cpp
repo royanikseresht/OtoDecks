@@ -29,14 +29,47 @@ MainComponent::MainComponent()
 
     addAndMakeVisible(playlistComponent);
 
+    addAndMakeVisible(recordButton);
+    recordButton.onClick = [this]()
+    {
+        if (recordButton.getToggleState())
+        {
+            auto chooser = std::make_shared<juce::FileChooser>(
+                "Select where to save your recording...",
+                juce::File::getSpecialLocation(juce::File::userDocumentsDirectory),
+                "*.wav"
+            );
+
+            chooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles,
+                [this, chooser](const juce::FileChooser& fc)
+            {
+                auto chosenFile = fc.getResult();
+                if (chosenFile != juce::File{})
+                {
+                    currentRecordingFile = chosenFile;
+                    recorder.startRecording(currentRecordingFile, deviceSampleRate, deviceNumChannels);
+                }
+                else
+                {
+                    recordButton.setToggleState(false, juce::dontSendNotification);
+                }
+            });
+        }
+        else
+        {
+            recorder.stopRecording();
+        }
+    };
+
     formatManager.registerBasicFormats();
 
     startTimer(30);
-
 }
 
 MainComponent::~MainComponent()
 {
+    if (recorder.isRecording())
+        recorder.stopRecording();
 
     stopTimer();
     // This shuts down the audio device and clears the audio source.
@@ -47,6 +80,9 @@ MainComponent::~MainComponent()
 //==============================================================================
 void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
+    deviceSampleRate = sampleRate;
+    deviceNumChannels = 2;
+
     player1.prepareToPlay(samplesPerBlockExpected, sampleRate);
     player2.prepareToPlay(samplesPerBlockExpected, sampleRate);
 
@@ -59,6 +95,12 @@ void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRat
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
 {   
     mixerSource.getNextAudioBlock(bufferToFill);
+
+    // If recording, write the buffer to disk
+    if (recorder.isRecording())
+    {
+        recorder.write(bufferToFill);
+    }
 }
 
 void MainComponent::releaseResources()
@@ -83,6 +125,9 @@ void MainComponent::paint (juce::Graphics& g)
 
 void MainComponent::resized()
 {
+    // Record button in the top center
+    recordButton.setBounds((getWidth() - 30) / 2 - 6, 130, 30, 15);
+
     deckGUI1.setBounds(0, 0, getWidth() / 2, getHeight() * 0.66 );
     deckGUI2.setBounds(getWidth() / 2, 0, getWidth() / 2, getHeight() * 0.66);
 

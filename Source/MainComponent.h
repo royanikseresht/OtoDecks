@@ -6,6 +6,8 @@
 #include "PlaylistComponent.h"
 #include "CSVOperator.h"
 #include "LookAndFeel.h"
+#include "AudioRecorder.h"
+#include "RecordToggleSwitch.h"
 
 //==============================================================================
 /*
@@ -54,6 +56,12 @@ private:
 
     CSVOperator csvOperator;
 
+    // Recording feature
+    RecordToggleSwitch recordButton;
+    AudioRecorder recorder;
+    double deviceSampleRate = 44100.0;
+    int deviceNumChannels = 2;
+    juce::File currentRecordingFile;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
