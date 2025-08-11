@@ -7,12 +7,8 @@
 */
 
 #pragma once
-
 #include <JuceHeader.h>
 
-//==============================================================================
-/*
-*/
 class WaveformDisplay  : public juce::Component,
                                 juce::ChangeListener
 {
@@ -22,11 +18,8 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
-
     void changeListenerCallback(juce::ChangeBroadcaster *source) override;
-
     void loadURL(juce::URL audioURL);
-
     void setPositionRelative(double pos);
 
 private:

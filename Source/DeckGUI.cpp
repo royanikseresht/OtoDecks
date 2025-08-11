@@ -28,11 +28,9 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player, juce::AudioFormatManager& _formatManage
     addAndMakeVisible(twiceSpeedButton);
     addAndMakeVisible(trackListComponent);
     addAndMakeVisible(waveformDisplay);
-
     addAndMakeVisible(remixButton);
     addAndMakeVisible(genreSelector);
     genreSelector.setLookAndFeel(&modernLNF);
-
     remixButton.addListener(this);
 
     genreSelector.addItem("Piano", 1);
@@ -53,10 +51,8 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player, juce::AudioFormatManager& _formatManage
                 remixReady = true;
             }
         }
-
         genreSelector.setVisible(false);
     };
-
 
     // Listeners
     playButton.addListener(this);
@@ -88,7 +84,6 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player, juce::AudioFormatManager& _formatManage
     twiceSpeedButton.setClickingTogglesState(true);
     twiceSpeedButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffd5d5da));
 
-
     posSlider.onDragStart = [this]() { isDraggingPosSlider = true; };
     posSlider.onDragEnd = [this]() {
         isDraggingPosSlider = false;
@@ -109,18 +104,15 @@ DeckGUI::~DeckGUI()
 void DeckGUI::paint (juce::Graphics& g)
 {
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
-
     g.setColour (juce::Colour(0xffd5d5da));
     g.fillRect(getLocalBounds());
     g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-
     g.setColour (juce::Colours::white);
     g.setFont (14.0f);
 }
 
 void DeckGUI::resized()
 {
-
     // Variable Declaration for better grids
     double rowH = getHeight() / 20;
     double columnW = getWidth() / 16;
@@ -134,7 +126,7 @@ void DeckGUI::resized()
     muteButton.setBounds(0, rowH * 4, columnW * 4, rowH);
     twiceSpeedButton.setBounds(columnW * 12, rowH * 4, columnW * 4, rowH);
     
-        double buttonY = rowH * 19;
+    double buttonY = rowH * 19;
     double buttonH = rowH * 1.2;
     double buttonW = getWidth() / 3;
 
@@ -143,7 +135,6 @@ void DeckGUI::resized()
     
     loadButton.setBounds(buttonW, buttonY, buttonW, buttonH);
     loadPlaylistButton.setBounds(buttonW * 2, buttonY, buttonW, buttonH);
-
 
     // Sliders
     volSlider.setBounds(0, 0, columnW * 4 , rowH * 4);
@@ -158,9 +149,7 @@ void DeckGUI::resized()
     posSlider.setTextBoxStyle(juce::Slider::TextEntryBoxPosition::NoTextBox, true, columnW * 4, rowH * 0.75);
 
     trackListComponent.setBounds(0, rowH * 5, getWidth(), rowH * 10);
-
     waveformDisplay.setBounds(columnW * 0.1, rowH * 16, columnW * 15.8, rowH * 3);
-
 }
 
 void DeckGUI::buttonClicked(juce::Button* button)
@@ -180,8 +169,6 @@ void DeckGUI::buttonClicked(juce::Button* button)
             player->stop();
         }
     }
-    
-
     if (button == &reverseButton)
     {
         if (player != nullptr)
@@ -189,7 +176,6 @@ void DeckGUI::buttonClicked(juce::Button* button)
             player->startReverse();
         }
     }
-
     // Loads and plays a track
     if (button == &loadButton)
     {
@@ -198,7 +184,6 @@ void DeckGUI::buttonClicked(juce::Button* button)
             juce::File{},
             "*.mp3;*.wav"
         );
-
         chooser->launchAsync(
             juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
             [this, chooser](const juce::FileChooser& fc)
@@ -226,8 +211,6 @@ void DeckGUI::buttonClicked(juce::Button* button)
                 }
             });
     }
-
-
     // Plays the prepared song from the playlist
     if (button == &playSelectedButton)
     {
@@ -247,9 +230,7 @@ void DeckGUI::buttonClicked(juce::Button* button)
             trackListComponent.trackTitles.clear();
             trackListComponent.trackPaths.clear();
         }
-
     }
-
     // Loads the playlist to the deck
     if (button == &loadPlaylistButton)
     {
@@ -258,9 +239,7 @@ void DeckGUI::buttonClicked(juce::Button* button)
         {
             trackListComponent.loadPlaylist(playlist->trackTitles, playlist->trackPaths);
         }
-
     }
-
     // Mutes the volume if on
     if (button == &muteButton)
     {
@@ -273,7 +252,6 @@ void DeckGUI::buttonClicked(juce::Button* button)
             player->setGain(volSlider.getValue());
         }
     }
-
     // Set the speed 2x when 2x button is 'on'
     if (button == &twiceSpeedButton)
     {
@@ -286,7 +264,6 @@ void DeckGUI::buttonClicked(juce::Button* button)
             player->setSpeed(speedSlider.getValue());
         }
     }
-
     if (button == &remixButton)
     {
         if (!remixReady)
@@ -305,8 +282,6 @@ void DeckGUI::buttonClicked(juce::Button* button)
             remixButton.setButtonText("CHOOSE GENRE");
         }
     }
-
-
 }
 
 // Slider Functions
@@ -317,13 +292,11 @@ void DeckGUI::sliderValueChanged(juce::Slider* slider)
     {
         player->setGain(slider->getValue());
     }
-
     // Changes the speed if 2x is 'off'
     if (slider == &speedSlider && !twiceSpeedButton.getToggleState())
     {
         player->setSpeed(slider->getValue());
     }
-
     if (slider == &posSlider)
     {
         player->setPositionRelative(slider->getValue());
@@ -334,14 +307,11 @@ void DeckGUI::timerCallback()
 {
     // Get position from player only once
     double pos = player->getPositionRelative();
-
     // Update slider only if the user isn't dragging it
     if (!isDraggingPosSlider)
         posSlider.setValue(pos, juce::dontSendNotification);
-
     // Update waveform with the same value
     waveformDisplay.setPositionRelative(pos);
-
     // Update your track timer
     trackListComponent.updateTimer(player->sendTimer());
 }

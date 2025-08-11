@@ -10,18 +10,13 @@
 #include "TrackListComponent.h"
 #include "random"
 
-//==============================================================================
 TrackListComponent::TrackListComponent(DJAudioPlayer* _player, WaveformDisplay* _waveformDisplay)
                 : player(_player), waveformDisplay(_waveformDisplay)
 {
-    // In your constructor, you should add any child components, and
-    // initialise any special settings that your component needs.
-
     addAndMakeVisible(repeatButton);
     addAndMakeVisible(shuffleButton);
     addAndMakeVisible(nextButton);
     addAndMakeVisible(previousButton);
-
     addAndMakeVisible(previousLabel);
     addAndMakeVisible(previousLabel2);
     addAndMakeVisible(nextLabel);
@@ -62,9 +57,6 @@ void TrackListComponent::paint(juce::Graphics& g)
 
 void TrackListComponent::resized()
 {
-    // This method is where you should set the bounds of any child
-    // components that your component contains..
-
     double rowH = getHeight() / 10;
     double columnW = getWidth() / 16;
 
@@ -148,15 +140,12 @@ void TrackListComponent::loadPlaylist(std::vector<juce::String> trackList, std::
         previousTrack = trackTitles.at(trackTitles.size() - 1);
         nextTrack = trackTitles.at(0);
     }
-
     // Update Labels
     labelUpdate();
-
 }
 
 void TrackListComponent::changeToNextTrack()
 {
-
     // Change to track variables according to the playlist size
     if (trackTitles.size() >= 3)
     {
@@ -170,7 +159,6 @@ void TrackListComponent::changeToNextTrack()
             // Updates tracCounter
             trackCounter = 1;
         }
-
         else if (trackCounter == trackTitles.size() - 1)
         {
             // Updates the track label variables
@@ -181,7 +169,6 @@ void TrackListComponent::changeToNextTrack()
             // Updates trackCounter
             trackCounter = 0;
         }
-
         else if (trackCounter == trackTitles.size() - 2)
         {
             // Updates the track label variables
@@ -192,7 +179,6 @@ void TrackListComponent::changeToNextTrack()
             // Updates trackCounter
             trackCounter++;
         }
-
         // The case of loading playlist while playing a track
         else if (trackCounter == -1)
         {
@@ -202,7 +188,6 @@ void TrackListComponent::changeToNextTrack()
 
             trackCounter = 0;
         }
-
         else
         {
             // Updates the track label variables
@@ -214,7 +199,6 @@ void TrackListComponent::changeToNextTrack()
             trackCounter++;
         }
     }
-
     else if (trackTitles.size() == 2)
     {
         if (trackCounter == 0)
@@ -227,7 +211,6 @@ void TrackListComponent::changeToNextTrack()
             // Updates trackCounter
             trackCounter = 1;
         }
-
         else if (trackCounter == -1)
         {
             previousTrack = trackTitles.at(1);
@@ -236,7 +219,6 @@ void TrackListComponent::changeToNextTrack()
 
             trackCounter = 0;
         }
-
         else
         {
             // Updates the track label variables
@@ -247,7 +229,6 @@ void TrackListComponent::changeToNextTrack()
             trackCounter = 0;
         }
     }
-    
     else if (trackTitles.size() == 1)
     {
 
@@ -255,12 +236,10 @@ void TrackListComponent::changeToNextTrack()
         nextTrack = "No Track";
         currentTrack = trackTitles.at(0);
     }
-
     else if (trackTitles.size() == 0)
     {
         return;
     }
-
     // Update Labels
     labelUpdate();
 
@@ -284,7 +263,6 @@ void TrackListComponent::changeToPreviousTrack()
             // Updates tracCounter
             trackCounter = trackTitles.size() - 1;
         }
-
         else if (trackCounter == 1)
         {
             // Updates the track label variables
@@ -295,7 +273,6 @@ void TrackListComponent::changeToPreviousTrack()
             // Updates trackCounter
             trackCounter = 0;
         }
-
         else if (trackCounter == trackTitles.size() - 1)
         {
             // Updates the track label variables
@@ -306,7 +283,6 @@ void TrackListComponent::changeToPreviousTrack()
             // Updates trackCounter
             trackCounter--;
         }
-
         else if (trackCounter == -1)
         {
             previousTrack = trackTitles.at(trackTitles.size() - 2);
@@ -315,7 +291,6 @@ void TrackListComponent::changeToPreviousTrack()
 
             trackCounter = trackTitles.size() - 1;
         }
-
         else
         {
             // Updates the track label variables
@@ -327,7 +302,6 @@ void TrackListComponent::changeToPreviousTrack()
             trackCounter--;
         }
     }
-
     else if (trackTitles.size() == 2)
     {
         if (trackCounter == 0)
@@ -340,7 +314,6 @@ void TrackListComponent::changeToPreviousTrack()
             // Updates trackCounter
             trackCounter = 1;
         }
-
         else if (trackCounter == -1)
         {
             previousTrack = trackTitles.at(0);
@@ -349,7 +322,6 @@ void TrackListComponent::changeToPreviousTrack()
 
             trackCounter = 1;
         }
-
         else
         {
             // Updates the track label variables
@@ -360,19 +332,16 @@ void TrackListComponent::changeToPreviousTrack()
             trackCounter = 0;
         }
     }
-
     else if (trackTitles.size() == 1)
     {
         previousTrack = "No Track";
         nextTrack = "No Track";
         currentTrack = trackTitles.at(0);
     }
-
     else if (trackTitles.size() == 0)
     {
         return;
     }
-
     // Update Labels
     labelUpdate();
 
@@ -391,7 +360,6 @@ void TrackListComponent::updateTimer(double time)
 juce::String TrackListComponent::convertSecondsToTimer(double time)
 {
     int sampleTime = floor(time);
-
     int hrs = sampleTime / 3600;
     int min = (sampleTime % 3600) / 60;
     int sec = sampleTime % 60;
@@ -419,10 +387,8 @@ juce::String TrackListComponent::convertSecondsToTimer(double time)
         }
 
         formattedTime = hrsAsStr + ':' + minAsStr + ':' + secAsStr ;
-
         return formattedTime;
     }
-
     else
     {
 
@@ -439,7 +405,6 @@ juce::String TrackListComponent::convertSecondsToTimer(double time)
         }
 
         formattedTime = minAsStr + ':' + secAsStr;
-
         return formattedTime;
     }
 }
@@ -451,22 +416,17 @@ void TrackListComponent::shuffleList()
     std::mt19937 shuffler(rd());
     std::shuffle(trackPaths.begin(), trackPaths.end(), shuffler);
 
-    // The suffled trackTitles should be synchronized with trackPaths
-
     // Clear trackList vector first
     trackTitles.clear();
-
     juce::File tempPath;
 
     for (std::string& t : trackPaths)
     {
         // Convert t to File
         tempPath = juce::File(t);
-
         // Substract the file name and push to trackTitles vector
         trackTitles.push_back(tempPath.getFileNameWithoutExtension());
     }
-
     // Load the trackList again
     loadPlaylist(trackTitles, trackPaths);
 }
@@ -492,7 +452,6 @@ void TrackListComponent::proceedEndOfTrack()
     }
 }
 
-
 // Button function callers
 void TrackListComponent::buttonClicked(juce::Button* button)
 {
@@ -500,19 +459,16 @@ void TrackListComponent::buttonClicked(juce::Button* button)
     {
         changeToNextTrack();
     }
-
     if (button == &previousButton)
     {
         changeToPreviousTrack();
     }
-
     if (button == &shuffleButton)
     {
         if (trackTitles.size() > 0)
         {
             shuffleList();
         }
-
     }
 }
 

@@ -16,7 +16,6 @@ class DJAudioPlayer : public juce::AudioSource {
         DJAudioPlayer(juce::AudioFormatManager& _formatManager);
         ~DJAudioPlayer();
 
-        //==============================================================================
         void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
         void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override;
         void releaseResources() override;
@@ -48,21 +47,16 @@ class DJAudioPlayer : public juce::AudioSource {
         bool isReversed() const { return isReversedFlag; } 
         double getSampleRate() const { return currentSampleRate; }
 
-
-
     private:
         juce::AudioFormatManager& formatManager;
-
         juce::AudioBuffer<float> audioBuffer;
         juce::AudioBuffer<float> reversedBuffer;
-
         std::unique_ptr<juce::AudioFormatReaderSource> forwardSource;
         std::unique_ptr<OtoDecksAudio::MemoryAudioSource> reverseMemorySource;
-
         juce::AudioTransportSource forwardTransport;
         juce::AudioTransportSource reverseTransport;
 
-        // Add these resamplers for speed control
+        // For speed control
         juce::ResamplingAudioSource forwardResampler { &forwardTransport, false };
         juce::ResamplingAudioSource reverseResampler { &reverseTransport, false };
 
@@ -71,6 +65,4 @@ class DJAudioPlayer : public juce::AudioSource {
 
         bool isDraggingPosSlider = false;
         bool remixReady = false;
-
-
 };

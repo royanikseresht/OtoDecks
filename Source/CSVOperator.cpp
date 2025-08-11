@@ -62,7 +62,6 @@ std::vector<TrackInfo> CSVOperator::readTracksCSV()
 
         tracks.push_back(std::move(info));
     }
-
     return tracks;
 }
 
@@ -76,7 +75,6 @@ void CSVOperator::writeTracksCSV(const std::vector<TrackInfo>& tracks)
         DBG("CSVOperator: Failed to open CSV for writing");
         return;
     }
-
     for (const auto& track : tracks)
     {
         // Escape commas in notes or paths if needed (simple version, wrap with quotes if comma found)
@@ -86,7 +84,6 @@ void CSVOperator::writeTracksCSV(const std::vector<TrackInfo>& tracks)
                 return "\"" + str + "\"";
             return str;
         };
-
         outFile << escapeCSV(track.path) << ",";
         outFile << track.bpm << ",";
         outFile << escapeCSV(track.key) << ",";

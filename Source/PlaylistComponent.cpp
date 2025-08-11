@@ -4,7 +4,6 @@
 #include <iostream> 
 
 //==============================================================================
-
 static const char* heartFilledSVG = R"(
 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
   <path fill="#E53935" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3
@@ -22,6 +21,7 @@ static const char* heartOutlineSVG = R"(
     C13.46,6,14.96,5,16.5,5C18.5,5,20,6.5,20,8.5C20,11.39,16.86,14.24,12.1,18.55z"/>
 </svg>
 )";
+//==============================================================================
 
 class BPMAnalysisJob : public juce::ThreadPoolJob
 {
@@ -73,8 +73,6 @@ private:
     std::vector<std::string> trackPaths;
     std::function<void(std::vector<std::pair<float, juce::String>>)> callback;
 };
-
-//--------------------------
 
 PlaylistComponent::PlaylistComponent()
 {
@@ -391,10 +389,8 @@ juce::Component* PlaylistComponent::refreshComponentForCell(int rowNumber, int c
                 CSVOperator::saveAllTracks(tracks);
             }
         };
-
         return heartButton;
     }
-
     return existingComponentToUpdate;
 }
 
@@ -471,7 +467,6 @@ void PlaylistComponent::searchTracks(juce::String input)
             return;
         }
     }
-
     rowCounter = -1;
 }
 
@@ -487,7 +482,6 @@ void PlaylistComponent::buttonClicked(juce::Button* button)
             prepareLabel1.setText("SELECTED TRACK : " + selectedTrack, juce::dontSendNotification);
         }
     }
-
     if (button == &addTrackButton)
     {
         auto chooser = std::make_shared<juce::FileChooser>("Select a file...", juce::File{}, "*.mp3;*.wav");
@@ -504,7 +498,6 @@ void PlaylistComponent::buttonClicked(juce::Button* button)
                 }
             });
     }
-
     if (button == &removeTrackButton)
     {
         int selectedRow = tableComponent.getSelectedRow();
@@ -514,12 +507,10 @@ void PlaylistComponent::buttonClicked(juce::Button* button)
             refreshPlaylist();
         }
     }
-
     if (button == &searchButton)
     {
         searchTracks(searchBox.getText());
     }
-
     if (button == &suggestMixButton)
     {
         int currentIndex = tableComponent.getSelectedRow();
@@ -542,7 +533,6 @@ void PlaylistComponent::analyzeTrackBPMs()
         trackMetadata = std::move(result);
         tableComponent.repaint();
     });
-
     threadPool.addJob(job, true);
 }
 
@@ -568,7 +558,6 @@ int PlaylistComponent::suggestNextTrack(int currentIndex)
             bestIndex = i;
         }
     }
-
     return bestIndex;
 }
 

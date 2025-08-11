@@ -36,8 +36,7 @@ ModernLookAndFeel::ModernLookAndFeel()
     setColour(juce::ComboBox::outlineColourId, juce::Colour(0xffd1d1d6));            
     setColour(juce::ComboBox::textColourId, juce::Colours::black);                   
     setColour(juce::ComboBox::arrowColourId, juce::Colour(0xffff2d55));               
-    setColour(juce::PopupMenu::textColourId, juce::Colours::black);                   // <-- normal menu text
+    setColour(juce::PopupMenu::textColourId, juce::Colours::black);
     setColour(juce::PopupMenu::highlightedBackgroundColourId, juce::Colour(0xffff2d55)); 
     setColour(juce::PopupMenu::highlightedTextColourId, juce::Colours::white);        
-
 }

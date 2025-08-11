@@ -16,9 +16,6 @@
 #include "TrackListComponent.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
-//==============================================================================
-/*
-*/
 class DeckGUI  :    public juce::Component,
                     public juce::Button::Listener,
                     public juce::Slider::Listener,
@@ -37,10 +34,8 @@ public:
 
     // Implement Slider::Listener
     void sliderValueChanged(juce::Slider* slider) override;
-
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
-
     void timerCallback() override;
 
     WaveformDisplay waveformDisplay;
@@ -55,23 +50,17 @@ private:
     juce::TextButton muteButton{ "MUTE" };
     juce::TextButton twiceSpeedButton{ "2X" };
     juce::TextButton loadPlaylistButton{ "LOAD PLAYLIST" };
-
     juce::ComboBox genreSelector;
     juce::TextButton remixButton{ "CHOOSE GENRE" };
     juce::File selectedRemixFile;
     bool remixReady = false;
-
     juce::Slider volSlider;
     juce::Slider speedSlider;
     juce::Slider posSlider;
-
     DJAudioPlayer* player;
     PlaylistComponent* playlist;
-    
     TrackListComponent trackListComponent{ player, &waveformDisplay };
-
     ModernLookAndFeel modernLNF;
-
     juce::SmoothedValue<double> smoothedPosition;
     bool isDraggingPosSlider = false;
 

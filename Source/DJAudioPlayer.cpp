@@ -18,11 +18,8 @@ DJAudioPlayer::DJAudioPlayer(juce::AudioFormatManager& _formatManager)
 {
 }
 
-DJAudioPlayer::~DJAudioPlayer()
-{
-}
+DJAudioPlayer::~DJAudioPlayer(){}
 
-//==============================================================================
 void DJAudioPlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
     currentSampleRate = sampleRate;
@@ -85,7 +82,6 @@ void DJAudioPlayer::loadURL(juce::URL audioURL)
 
         // Prepare reversed buffer and reverseMemorySource as before
         reversedBuffer.setSize(audioBuffer.getNumChannels(), audioBuffer.getNumSamples());
-
         for (int channel = 0; channel < audioBuffer.getNumChannels(); ++channel)
         {
             auto* writePtr = reversedBuffer.getWritePointer(channel);
@@ -107,7 +103,6 @@ void DJAudioPlayer::loadURL(juce::URL audioURL)
         DBG("Something went wrong loading the file");
     }
 }
-
 
 void DJAudioPlayer::setPositionRelative(double pos)
 {
@@ -161,7 +156,6 @@ double DJAudioPlayer::getPositionRelative()
     }
 }
 
-
 void DJAudioPlayer::start()
 {
     if (isReversedFlag)
@@ -173,7 +167,6 @@ void DJAudioPlayer::start()
         double forwardPos = getLengthInSeconds() - posReverse;
         forwardTransport.setPosition(forwardPos);
         forwardTransport.start();
-
         isReversedFlag = false;
     }
     else
@@ -182,7 +175,6 @@ void DJAudioPlayer::start()
             forwardTransport.start();
     }
 }
-
 
 void DJAudioPlayer::startForward()
 {
@@ -195,7 +187,6 @@ void DJAudioPlayer::startForward()
         double forwardPos = getLengthInSeconds() - posReverse;
         forwardTransport.setPosition(forwardPos);
         forwardTransport.start();
-
         isReversedFlag = false;
     }
     else
@@ -215,7 +206,6 @@ void DJAudioPlayer::startReverse()
 
         reverseTransport.setPosition(getLengthInSeconds() - posForward);
         reverseTransport.start();
-
         isReversedFlag = true;
     }
     else
@@ -233,8 +223,6 @@ void DJAudioPlayer::stop()
     else
         forwardTransport.stop();
 }
-
-
 
 void DJAudioPlayer::setPosition(double posInSecs)
 {
@@ -284,4 +272,3 @@ bool DJAudioPlayer::isPlaying() const
 {
     return isReversedFlag ? reverseTransport.isPlaying() : forwardTransport.isPlaying();
 }
-

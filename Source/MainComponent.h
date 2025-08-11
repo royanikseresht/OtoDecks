@@ -9,34 +9,22 @@
 #include "AudioRecorder.h"
 #include "RecordToggleSwitch.h"
 
-//==============================================================================
-/*
-    This component lives inside our window, and this is where you should put all
-    your controls and content.
-*/
-
-
 class MainComponent  :  public juce::AudioAppComponent,
                         private juce::Timer
 
 {
 public:
-    //==============================================================================
     MainComponent();
     ~MainComponent() override;
 
-    //==============================================================================
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill) override;
     void releaseResources() override;
 
-    //==============================================================================
     void paint (juce::Graphics& g) override;
     void resized() override;
 
 private:
-    //==============================================================================
-    // Your private member variables go here...
     void timerCallback() override; 
 
     ModernLookAndFeel modernLookAndFeel;
@@ -45,15 +33,11 @@ private:
     juce::AudioThumbnailCache thumbCache{ 100 };
 
     PlaylistComponent playlistComponent;
-
     DJAudioPlayer player1{formatManager};
     DeckGUI deckGUI1{&player1, formatManager, thumbCache, &playlistComponent};
-
     DJAudioPlayer player2{formatManager};
     DeckGUI deckGUI2{&player2, formatManager, thumbCache, &playlistComponent};
-
     juce::MixerAudioSource mixerSource;
-
     CSVOperator csvOperator;
 
     // Recording feature

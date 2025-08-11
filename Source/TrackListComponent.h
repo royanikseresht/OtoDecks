@@ -14,9 +14,7 @@
 #include <string>
 #include "DJAudioPlayer.h"
 #include "WaveformDisplay.h"
-//==============================================================================
-/*
-*/
+
 class TrackListComponent : public   juce::Component,
                                     juce::Button::Listener,
                                     juce::Timer
@@ -28,18 +26,12 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
-
-    // Implement Button::Listener
     void buttonClicked(juce::Button*) override;
-
     void timerCallback() override;
 
-
     // Track Variables
-
     std::vector<juce::String> trackTitles;
     std::vector<std::string> trackPaths;
-
     juce::String previousTrack = "No Track";
     juce::String nextTrack = "No Track";
     juce::String currentTrack = "No Track";
@@ -62,9 +54,7 @@ public:
     // Actions after an end of track
     void proceedEndOfTrack();
 
-
 private:
-
     // Buttons
     juce::TextButton nextButton{ "NEXT" };
     juce::TextButton previousButton{ "PREVIOUS" };

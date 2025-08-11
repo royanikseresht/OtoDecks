@@ -35,7 +35,6 @@ public:
         writer.reset();
         recording = false;
     }
-
     bool isRecording() const noexcept { return recording; }
 
     // Call from audio thread (fast). Writes current buffer to disk.
@@ -50,7 +49,6 @@ public:
 
 private:
     std::unique_ptr<juce::FileOutputStream> outputStream;
-
     std::unique_ptr<juce::AudioFormatWriter> writer;
     double sampleRate;
     int numChannels;
