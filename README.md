@@ -120,20 +120,7 @@ OtoDecks/
 
 ---
 
-## 📌 Notes on the `.jucer` Setup
-
-- Project renamed to `OtoDecks` (from `OtoDecks1`).
-- Loop WAV files embedded as binary resources for portability.
-- Python BPM script included in resources.
-- Some modules (e.g., `juce_box2d`, `juce_video`, `juce_midi_ci`) may be unused — removing them speeds compilation.
-- If binary size is critical, convert loops to `.ogg`/`.flac` before embedding.
-
----
-
 ## 🚀 Future Improvements
-- Auto-loop overlays in waveform view.
-- BPM-matched loop sync.
-- Exportable recording summary.
 - Two-take mode for recording.
 - Enhanced EQ controls per deck.
 
