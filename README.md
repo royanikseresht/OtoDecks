@@ -2,7 +2,8 @@
 
 OtoDecks is a JUCE-based dual-deck DJ application that combines **real-time audio mixing**, **loop triggering**, **BPM analysis via Python**, and **custom playlist management** into a creative DJ/production tool.  
 It’s built in **C++ with JUCE** for low-latency performance, and integrates **Python + Librosa** for advanced audio analysis.
-![OtoDecks Screenshot](screenshots/oto_ui.png)
+
+![OtoDecks Screenshot](screenshots/otu_ui.png)
 
 ---
 
