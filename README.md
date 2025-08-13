@@ -106,6 +106,7 @@ OtoDecks/
 │   ├── TrackListComponent.cpp/.h
 │   ├── WaveformDisplay.cpp/.h
 └── OtoDecks.jucer
+└── CMakeLists.txt
 ```
 
 ---
