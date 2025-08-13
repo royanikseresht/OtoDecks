@@ -280,28 +280,36 @@ void PlaylistComponent::paintCell(juce::Graphics& g, int rowNumber, int columnId
     }
     else if (columnId == 4)
     {
-        if (rowNumber < (int)trackMetadata.size())
+        if (rowNumber >= 0 && rowNumber < (int)filteredTrackIndices.size())
         {
-            float bpm = trackMetadata[rowNumber].first;
-            if (bpm > 0.0f)
+            int originalIndex = filteredTrackIndices[rowNumber];
+
+            if (originalIndex >= 0 && originalIndex < (int)trackMetadata.size())
             {
-                g.setColour(juce::Colours::black);
-                g.setFont(juce::Font(14.0f, juce::Font::plain));
-                juce::String bpmText = juce::String(bpm, 1);
-                g.drawText(bpmText, 2, 0, width - 4, height, juce::Justification::centredLeft, true);
+                float bpm = trackMetadata[originalIndex].first;
+                if (bpm > 0.0f)
+                {
+                    g.setColour(juce::Colours::black);
+                    g.setFont(juce::Font(14.0f, juce::Font::plain));
+                    juce::String bpmText = juce::String(bpm, 1);
+                    g.drawText(bpmText, 2, 0, width - 4, height,
+                            juce::Justification::centredLeft, true);
+                }
+                else
+                {
+                    g.setColour(juce::Colours::lightgrey);
+                    g.setFont(juce::Font(14.0f, juce::Font::italic));
+                    g.drawText("N/A", 2, 0, width - 4, height,
+                            juce::Justification::centredLeft, true);
+                }
             }
             else
             {
                 g.setColour(juce::Colours::lightgrey);
                 g.setFont(juce::Font(14.0f, juce::Font::italic));
-                g.drawText("N/A", 2, 0, width - 4, height, juce::Justification::centredLeft, true);
+                g.drawText("Loading...", 2, 0, width - 4, height,
+                        juce::Justification::centredLeft, true);
             }
-        }
-        else
-        {
-            g.setColour(juce::Colours::lightgrey);
-            g.setFont(juce::Font(14.0f, juce::Font::italic));
-            g.drawText("Loading...", 2, 0, width - 4, height, juce::Justification::centredLeft, true);
         }
     }
 }
