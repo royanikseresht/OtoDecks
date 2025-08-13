@@ -127,7 +127,3 @@ OtoDecks/
 - Two-take mode for recording.
 - Enhanced EQ controls per deck.
 
----
-
-## 📜 License
-MIT License — feel free to remix and improve.
